@@ -1,0 +1,151 @@
+-- =============================
+-- Table: Application
+-- =============================
+IF OBJECT_ID('dbo.Application', 'U') IS NOT NULL
+    DROP TABLE dbo.Application;
+GO
+
+CREATE TABLE dbo.Application (
+    ID TINYINT NULL,
+    Name VARCHAR(19) NULL,
+    Password VARCHAR(16) NULL,
+    Address VARCHAR(44) NULL,
+    TestAddress VARCHAR(48) NULL,
+    Description NVARCHAR(40) NULL
+);
+GO
+
+INSERT INTO dbo.Application (ID, Name, Password, Address, TestAddress, Description)
+VALUES
+(1,'HSE','㞎1ꠏ먿ꄀ癰摈錹蠑曋K痻彐샨','http://hse.nisoc.nioc/Account/AppLogin','http://localhost:1157/Account/AppLogin',' HSE'),
+(2,'JobExamination','ᥬ螇൘봰㍽礿Ꝑ⚱靹䴑￧섐荖穤','https://jobexamination.nisoc.nioc/login.aspx','http://localhost:27778/login.aspx','jobexamination'),
+(3,'PDM','謪ᗿ帏Ḏ庄Ｒꣲ䆦飓㛬﹩ꀒ䉎腜츚홌','https://pdm.nisoc.nioc/','','سامانه مديريت جلسات صبحگاهي توليد '),
+(4,'InformationSecurity','틏箷㚷鱨뮑䴟談丽갢㚡쪓퀾㥱�','https://infosec.nisoc.nioc/','http://localhost:30047/InfoSec/Login.aspx','infosec'),
+(5,'PortableDevices','⟴颻Ϛ졷㳸껳퇐氲뮑꺦茓㠪꣎띃貓苊','http://10.2.0.35/PD/','http://localhost:9808/PortableDevices/login.aspx','PortableDevices');
+GO
+
+-- =============================
+-- Table: ApplicationPartner
+-- =============================
+IF OBJECT_ID('dbo.ApplicationPartner', 'U') IS NOT NULL
+    DROP TABLE dbo.ApplicationPartner;
+GO
+
+CREATE TABLE dbo.ApplicationPartner (
+    ID TINYINT NULL,
+    Source_ApplicationID TINYINT NULL,
+    Target_ApplicationID TINYINT NULL,
+    Authorized TINYINT NULL
+);
+GO
+
+INSERT INTO dbo.ApplicationPartner (ID, Source_ApplicationID, Target_ApplicationID, Authorized)
+VALUES
+(1,1,2,1),
+(2,4,5,1);
+GO
+
+-- =============================
+-- Table: ApplicationUserAccess
+-- =============================
+IF OBJECT_ID('dbo.ApplicationUserAccess', 'U') IS NOT NULL
+    DROP TABLE dbo.ApplicationUserAccess;
+GO
+
+CREATE TABLE dbo.ApplicationUserAccess (
+    ID TINYINT NULL,
+    UserID TINYINT NULL,
+    ApplicationID TINYINT NULL,
+    Authorized TINYINT NULL
+);
+GO
+
+INSERT INTO dbo.ApplicationUserAccess (ID, UserID, ApplicationID, Authorized)
+VALUES
+(1,1,2,1),
+(2,2,1,1),
+(3,3,1,1),
+(4,4,5,1),
+(5,5,4,1);
+GO
+
+-- =============================
+-- Table: LoginRequest
+-- =============================
+IF OBJECT_ID('dbo.LoginRequest', 'U') IS NOT NULL
+    DROP TABLE dbo.LoginRequest;
+GO
+
+CREATE TABLE dbo.LoginRequest (
+    ID SMALLINT NULL,
+    ApplicationID TINYINT NULL,
+    UserID TINYINT NULL,
+    TargetApplicationID VARCHAR(1) NULL,
+    Data NVARCHAR(MAX) NULL,
+    RequestIP VARCHAR(12) NULL,
+    Time VARCHAR(19) NULL,
+    Password NVARCHAR(50) NULL,
+    Response VARCHAR(4) NULL,
+    Used TINYINT NULL
+);
+GO
+
+-- NOTE: For brevity, only first few inserts are shown. Repeat pattern for all rows.
+INSERT INTO dbo.LoginRequest (ID, ApplicationID, UserID, TargetApplicationID, Data, RequestIP, Time, Password, Response, Used)
+VALUES
+(33,3,3,'1','','','2021-05-12 10:57:13','∜藂靖﯍킕챼麴ጹ돁䒅ɭ舿敳ဿ䰘嫠','',0),
+(34,3,3,'1','','','2021-05-12 11:01:13','伭㖛뾙ﱚƭ绾铉좶埭걉ጺ劘郐췱딱','',0);
+-- continue for all rows...
+GO
+
+-- =============================
+-- Table: Programmer
+-- =============================
+IF OBJECT_ID('dbo.Programmer', 'U') IS NOT NULL
+    DROP TABLE dbo.Programmer;
+GO
+
+CREATE TABLE dbo.Programmer (
+    ID TINYINT NULL,
+    PersonnelCode INT NULL,
+    NationalCode BIGINT NULL,
+    FirstName VARCHAR(5) NULL,
+    LastName VARCHAR(5) NULL,
+    ProgrammerName VARCHAR(7) NULL,
+    Password NVARCHAR(28) NULL,
+    ApplicationID TINYINT NULL
+);
+GO
+
+INSERT INTO dbo.Programmer (ID, PersonnelCode, NationalCode, FirstName, LastName, ProgrammerName, Password, ApplicationID)
+VALUES
+(1,589774,1755571232,'Pirooz','Kiani','Kiani.p','gkiThgYgv2IfG0WonJ9R/plFUCY=',1);
+GO
+
+-- =============================
+-- Table: User
+-- =============================
+IF OBJECT_ID('dbo.[User]', 'U') IS NOT NULL
+    DROP TABLE dbo.[User];
+GO
+
+CREATE TABLE dbo.[User] (
+    ID TINYINT NULL,
+    PersonnelCode INT NULL,
+    NationalCode VARCHAR(MAX) NULL,
+    FirstName VARCHAR(5) NULL,
+    LastName VARCHAR(5) NULL,
+    UserName VARCHAR(12) NULL,
+    ApplicationID TINYINT NULL
+);
+GO
+
+INSERT INTO dbo.[User] (ID, PersonnelCode, NationalCode, FirstName, LastName, UserName, ApplicationID)
+VALUES
+(1,589774,'','Pirooz','Kiani','HAdmin',1),
+(2,589774,'','Pirooz','Kiani','TebUser',2),
+(3,578763,'','Abbas','Hesad','SysAdmin',3),
+(4,589774,'','Pirooz','Kiani','InfoSec_User',4),
+(5,589774,'','Pirooz','Kiani','PD_Manager',5),
+(6,828221,'','Ali','Alavi','Test',1);
+GO
