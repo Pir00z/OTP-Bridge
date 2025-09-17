@@ -8,11 +8,11 @@ using System.Web;
 
 namespace Controller
 {
-    public class LinkManager
+    public class LinkManager_API
     {
         SqlConnection Cnn = new SqlConnection();
 
-        public LinkManager()
+        public LinkManager_API()
         {
 
             if (!string.IsNullOrEmpty(Cnn.ConnectionString))
