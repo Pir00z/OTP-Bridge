@@ -19,7 +19,7 @@ INSERT INTO dbo.Application (ID, Name, Password, Address, TestAddress, Descripti
 VALUES
 (1,'HSE','㞎1ꠏ먿ꄀ癰摈錹蠑曋K痻彐샨','http://hse.nisoc.nioc/Account/AppLogin','http://localhost:1157/Account/AppLogin',' HSE'),
 (2,'JobExamination','ᥬ螇൘봰㍽礿Ꝑ⚱靹䴑￧섐荖穤','https://jobexamination.nisoc.nioc/login.aspx','http://localhost:27778/login.aspx','jobexamination'),
-(3,'PDM','謪ᗿ帏Ḏ庄Ｒꣲ䆦飓㛬﹩ꀒ䉎腜츚홌','https://pdm.nisoc.nioc/','','سامانه مديريت جلسات صبحگاهي توليد '),
+(3,'PDM','謪ᗿ帏Ḏ庄Ｒꣲ䆦飓㛬﹩ꀒ䉎腜츚홌','https://pdm.nisoc.nioc/','','pdm'),
 (4,'InformationSecurity','틏箷㚷鱨뮑䴟談丽갢㚡쪓퀾㥱�','https://infosec.nisoc.nioc/','http://localhost:30047/InfoSec/Login.aspx','infosec'),
 (5,'PortableDevices','⟴颻Ϛ졷㳸껳퇐氲뮑꺦茓㠪꣎띃貓苊','http://10.2.0.35/PD/','http://localhost:9808/PortableDevices/login.aspx','PortableDevices');
 GO
@@ -149,3 +149,4 @@ VALUES
 (5,589774,'','Pirooz','Kiani','PD_Manager',5),
 (6,828221,'','Ali','Alavi','Test',1);
 GO
+
