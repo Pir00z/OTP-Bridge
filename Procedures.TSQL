@@ -1,0 +1,253 @@
+CREATE USER [LinkMngAdm] WITHOUT LOGIN WITH DEFAULT_SCHEMA=[dbo]
+GO
+/****** Object:  User [LinkMngUser]    Script Date: 9/17/2025 12:40:23 PM ******/
+CREATE USER [LinkMngUser] WITHOUT LOGIN WITH DEFAULT_SCHEMA=[dbo]
+GO
+ALTER ROLE [db_owner] ADD MEMBER [LinkMngAdm]
+GO
+/****** Object:  UserDefinedFunction [dbo].[IsValidUser]    Script Date: 9/17/2025 12:40:23 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+CREATE FUNCTION [dbo].[IsValidUser] (@ApplicationName nvarchar(50),@UserName nvarchar(50))
+RETURNS bit
+AS
+BEGIN	
+	Declare  @IsValid bit
+
+	
+	 Select @IsValid=Count(*) from  [dbo].[vApplicationUserAccess] where 
+	 Name=@ApplicationName And UserName = @UserName And Authorized =1
+	
+	RETURN @IsValid
+
+	--select dbo.IsValidUser('HSE','TebUser')
+
+END
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+--ApplicationID, UserID, RequestIP, Time, Password, Used
+CREATE proc [dbo].[AddLoginRequest]
+ (
+   @SourceApplicationName  nvarchar(50)
+  ,@SourceApplicationPass  nvarchar(8)
+  ,@TargetApplicationName  nvarchar(50)
+  ,@UserName  nvarchar(50)
+  ,@Data nvarchar(Max)='' 
+  ,@RequestIP nvarchar(20)=''  
+  ,@JoinMode  bit=0  
+  ,@TestMode  bit=0  
+ )
+ as
+ --ApplicationID, UserID, RequestIP, Time, Password, Used
+ Declare @link nvarchar(255)
+ Declare @Time DateTime
+ Declare @ApplicationID int
+ Declare @UserID int
+ Declare @Result nvarchar(25)
+ Declare @Authorized  bit=10  
+ Declare @TargetApplicationID int	
+
+
+ Set @UserID=0;
+ Select @ApplicationID=ID from [dbo].[Application]
+ Where Name=@SourceApplicationName and  [Password]=HashBytes('SHA2_256',Cast(@SourceApplicationPass as nvarchar(30)))
+ Select @TargetApplicationID=ID from [dbo].[Application] where Name=@TargetApplicationName
+  
+
+ if isnull(@ApplicationID,0)=0 
+ begin
+    select N'Requester Application has no Permissoin!' Result , 0 LoginRequestID , '' LinkPassword
+	return 
+  end
+
+  if (@JoinMode=1)
+  begin 
+     select  @Authorized=Authorized from [dbo].[vApplicationPartner]
+	         where Source_ApplicationID=@ApplicationID and Target_ApplicationID=@TargetApplicationID
+  end
+
+  if (@JoinMode=0)
+  begin
+      Select @UserID=UserID
+      from  [dbo].[vApplicationUserAccess] 
+	  where  Name=@TargetApplicationName  And UserName = @UserName And Authorized =1
+	  if isnull(@UserID,0)!=0 
+	    set @Authorized=1
+  	  else
+	   begin
+	    select N'Requester User has no Permissoin!' Result, 0 LoginRequestID , '' LinkPassword
+	    return 
+	   end	  
+  end
+  
+if   @Authorized=1
+begin
+	
+	
+	 Declare @HashPassword nvarchar(255)
+	 Set @Time=GETDATE()
+	 Set @HashPassword=HashBytes('SHA2_256', Cast(@Time as nvarchar(50)) +Cast(@ApplicationID as nvarchar(50)) +Cast(@UserID as nvarchar(50))+@RequestIP  )
+	
+	 insert into [dbo].[LoginRequest]
+	 select @ApplicationID, @UserID,@TargetApplicationID,@Data, @RequestIP, @Time, @HashPassword,Null, 0
+
+     select IIF(@TestMode =0,Address,TestAddress)+ '?UserName=' + @UserName+ '&ApplicationName=' + @SourceApplicationName + '&Password=' + @HashPassword   Result ,SCOPE_IDENTITY() LoginRequestID,@HashPassword LinkPassword
+		  from [dbo].[Application]
+		  where ID=@TargetApplicationID
+	
+end
+else
+    select N'Invalid Request!' Result , 0 LoginRequestID , '' LinkPassword
+
+--   exec dbo.AddLoginRequest 'JobExamination','Job@3223','HSE','sysadmin',N'1400/03/01','::1',False,True
+	
+                                      
+GO
+GO
+/****** Object:  StoredProcedure [dbo].[GetResponse]    Script Date: 9/17/2025 12:40:23 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+--ApplicationID, UserID, RequestIP, Time, Password, Used
+CREATE proc [dbo].[GetResponse]
+ (
+   @LoginRequestID  nvarchar(50)
+  ,@Password nvarchar(255)
+ )
+ as
+	Select Response from [dbo].[LoginRequest]	 
+	 where ID=@LoginRequestID and Password=@Password
+	
+                                        
+--exec [dbo].[GetResponse] 171,'쀜໤䉶왊ඣ㻷边໰輦鋒旹雥튗摮'
+GO
+/****** Object:  StoredProcedure [dbo].[SetPassword]    Script Date: 9/17/2025 12:40:23 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE proc [dbo].[SetPassword]
+as
+Declare @HashPassword nvarchar(255)
+
+Set @HashPassword=HashBytes('SHA2_256',Cast(N'Infosec@3335' as nvarchar(30)))
+--Set @HashPassword=HashBytes('SHA2_256',Cast(N'PD@3335' as nvarchar(30)))
+
+Update [dbo].[Application]
+set [Password]=@HashPassword
+where ID=4
+
+GO
+/****** Object:  StoredProcedure [dbo].[SetResponse]    Script Date: 9/17/2025 12:40:23 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+--ApplicationID, UserID, RequestIP, Time, Password, Used
+CREATE proc [dbo].[SetResponse]
+ (
+   @LoginRequestID  nvarchar(50)
+  ,@Response nvarchar(Max)
+ )
+ as
+	Update [dbo].[LoginRequest]
+	 set Response= @Response
+	 where ID=@LoginRequestID
+	
+
+
+GO
+
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+--ApplicationID, UserID, RequestIP, Time, Password, Used
+CREATE proc [dbo].[ValidateRequest]
+ (
+   @TargetApplicationName  nvarchar(50)
+  ,@UserName  nvarchar(50)=''
+  ,@LinkPassword  nvarchar(255)
+  ,@RequestIP nvarchar(20)=''
+  ,@SourceApplicationName  nvarchar(50)=''
+ )
+ as
+ Declare @TargetApplicationID int
+ Declare @SourceApplicationID int
+ Declare @UserID int=0
+ Declare @Password nvarchar(255)
+ Declare @Time DateTime
+ Declare @RequestID bigint
+ Declare @Authorized bit=0	
+ Declare @Joined bit=0	
+ Declare @Result nvarchar(255)
+
+ Select @TargetApplicationID=Isnull(ID,0)  from  [dbo].[Application] Where  Name=@TargetApplicationName      
+ Select @SourceApplicationID=Isnull(ID,0)  from  [dbo].[Application] where  Name=@SourceApplicationName      
+
+ if    (@SourceApplicationID>0 and @TargetApplicationID>0)
+	begin
+		Select @Joined=isnull(Authorized,0) from dbo.vApplicationPartner
+			where [Source_ApplicationID]=@SourceApplicationID and [Target_ApplicationID]=@TargetApplicationID
+			if @Joined=0 set @Result= N'Applications are not linked!' 				   			   			
+	end
+
+if  @Joined=0
+	begin
+	  Select @UserID=UserID
+			  from  [dbo].[vApplicationUserAccess] 
+			  where  ApplicationID=@TargetApplicationID And UserName = @UserName And Authorized =1
+		 if isnull(@UserID,0)=0 
+		  set @Result= N'Requester User not authorized!'		
+		 else
+		  set @Authorized=1
+	 end
+ 
+ if @Joined =0 and @Authorized=0
+ begin
+   select @Result Result ,0 LoginRequestID
+   return
+ end
+
+ select top 1 @RequestID=ID,@Password=Password,@Time=Time  from [dbo].[LoginRequest]
+	where TargetApplicationID=@TargetApplicationID and UserID=@UserID and Used=0
+	order by Time desc
+	if isnull(@RequestID,0)=0 
+	begin
+		select N'Inavlid Request !' Result ,0 LoginRequestID
+		return
+	end
+
+	if (DATEDIFF(minute,@Time,GETDATE())>3)
+		begin
+			select N'Password Expired !' Result ,0 LoginRequestID
+			return
+		end
+
+	if (@LinkPassword!=@Password)
+		begin
+			select N'Invalid Password !' Result ,0 LoginRequestID
+			return
+		end
+		else 
+		begin
+			update [dbo].[LoginRequest] set Used=1 where  ID= @RequestID and Used=0				  
+			select N'OK' Result,* from  [dbo].[LoginRequest] where  ID= @RequestID
+		end
+	
+-- exec dbo.ValidateRequest 'HSE','TebUser',N'ﮜ⃔빅琠�ͫ�둽疲쨊䗋ꩵ툵ꠠ','','JobExamination'                            
+
+
+
+
+
+
